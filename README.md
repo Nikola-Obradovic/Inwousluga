@@ -1,16 +1,4 @@
-# CSIS 270 & CSIS240 - Group Project
-## Inwousluga - A Web Application That Allows Users to Provide, Consume, and Interact with Each Other's Services
 
-### Members of the group:
-- Nijaz Andelić
-- Alen Bejtić
-- Haris Mustabašić
-
-### Professors:
-- Amer Hadžikadić
-- Bakir Husović
-
----
 
 ## Contents
 1. [Inwousluga](#inwousluga)
