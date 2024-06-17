@@ -1,0 +1,199 @@
+##DB Creation
+
+CREATE TABLE Admin (
+    AID INT AUTO_INCREMENT PRIMARY KEY,
+    Email VARCHAR(255) NOT NULL,
+    Password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE User (
+    UID INT AUTO_INCREMENT PRIMARY KEY,
+    First_Name VARCHAR(255) NOT NULL,
+    Last_Name VARCHAR(255) NOT NULL,
+    DOB DATE,
+    Phone VARCHAR(15),
+    Email VARCHAR(255) NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    Total_Rating FLOAT
+);
+
+CREATE TABLE Category (
+    CID INT AUTO_INCREMENT PRIMARY KEY,
+    Category_Type VARCHAR(255) NOT NULL,
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Admin_ID INT,
+    FOREIGN KEY (Admin_ID) REFERENCES Admin(AID)
+);
+
+CREATE TABLE Service (
+    SID INT AUTO_INCREMENT PRIMARY KEY,
+    Service_Name VARCHAR(255) NOT NULL,
+    Service_Description TEXT,
+    Category_ID INT,
+    FOREIGN KEY (Category_ID) REFERENCES Category(CID)
+);
+
+CREATE TABLE Provider_Service (
+    PSID INT AUTO_INCREMENT PRIMARY KEY,
+    Total_Service_Rating FLOAT,
+    Name_Of_Service VARCHAR(255) NOT NULL,
+    Location VARCHAR(255),
+    Telephone_Number VARCHAR(15),
+    Description TEXT,
+    Website VARCHAR(255),
+    Email VARCHAR(255),
+    Date_Of_Birth DATE,
+    User_ID INT,
+    Service_ID INT,
+    FOREIGN KEY (User_ID) REFERENCES Users(UID),
+    FOREIGN KEY (Service_ID) REFERENCES Service(SID)
+);
+
+CREATE TABLE Collaboration (
+    CID INT AUTO_INCREMENT PRIMARY KEY,
+    Status ENUM('p', 'o', 'f') NOT NULL,
+    Review INT,
+    Comment TEXT,
+    Service_User_Message TEXT,
+    Worked_Hours INT,
+    Collaboration_Started TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Collaboration_Finished TIMESTAMP,
+    User_ID INT,
+    Provider_Service_ID INT,
+    FOREIGN KEY (User_ID) REFERENCES Users(UID),
+    FOREIGN KEY (Provider_Service_ID) REFERENCES Provider_Service(PSID)
+);
+
+CREATE TABLE Liked_Service (
+    LSID INT AUTO_INCREMENT PRIMARY KEY,
+    Comment TEXT,
+    Date_Liked TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    User_ID INT,
+    Provider_Service_ID INT,
+    FOREIGN KEY (User_ID) REFERENCES Users(UID),
+    FOREIGN KEY (Provider_Service_ID) REFERENCES Provider_Service(PSID)
+);
+
+CREATE TABLE User_Edit_Data (
+    UEID INT AUTO_INCREMENT PRIMARY KEY,
+    Date_Edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    User_ID INT,
+    Admin_ID INT,
+    FOREIGN KEY (User_ID) REFERENCES User(UID),
+    FOREIGN KEY (Admin_ID) REFERENCES Admin(AID)
+);
+
+##Attributes and PK/FK relationshiop QUERY
+
+SELECT
+    T.TABLE_NAME AS 'Table Name',
+    C.COLUMN_NAME AS 'Column Name',
+    C.COLUMN_TYPE AS 'Column Type',
+    CASE
+        WHEN KCU.CONSTRAINT_NAME IS NOT NULL AND KCU.REFERENCED_TABLE_NAME IS NULL THEN 'PK'
+        WHEN KCU.CONSTRAINT_NAME IS NOT NULL AND KCU.REFERENCED_TABLE_NAME IS NOT NULL THEN 'FK'
+        ELSE ''
+    END AS 'Key Type',
+    KCU.REFERENCED_TABLE_NAME AS 'Referenced Table',
+    KCU.REFERENCED_COLUMN_NAME AS 'Referenced Column'
+FROM
+    INFORMATION_SCHEMA.TABLES T
+JOIN
+    INFORMATION_SCHEMA.COLUMNS C
+    ON T.TABLE_NAME = C.TABLE_NAME
+    AND T.TABLE_SCHEMA = C.TABLE_SCHEMA
+LEFT JOIN
+    INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU
+    ON T.TABLE_NAME = KCU.TABLE_NAME
+    AND C.COLUMN_NAME = KCU.COLUMN_NAME
+    AND T.TABLE_SCHEMA = KCU.TABLE_SCHEMA
+    AND (
+        KCU.CONSTRAINT_NAME = 'PRIMARY'
+        OR KCU.REFERENCED_TABLE_NAME IS NOT NULL
+    )
+WHERE
+    T.TABLE_TYPE = 'BASE TABLE'
+    AND T.TABLE_SCHEMA = 'inwousluga'
+ORDER BY
+    T.TABLE_NAME, C.ORDINAL_POSITION;
+
+##QUERIES
+
+1,2,3 takoder selecta svu datu servis provajdera sa ps.*, brisi shodno tome.
+
+1) Select all collaborations with status pending (enum value 'p')
+SELECT c.*, ps.*
+FROM collaboration c
+JOIN provider_service ps ON c.Provider_Service_ID = ps.PSID
+WHERE c.Status = 'p'
+AND c.User_ID = [User_ID];
+
+2) Select all collaborations with status active (enum value 'a')
+SELECT c.*, ps.*
+FROM collaboration c
+JOIN provider_service ps ON c.Provider_Service_ID = ps.PSID
+WHERE c.Status = 'a'
+AND c.User_ID = [User_ID];
+
+3) Select all collaborations with status finished (enum value 'f')
+SELECT c.*, ps.*
+FROM collaboration c
+JOIN provider_service ps ON c.Provider_Service_ID = ps.PSID
+WHERE c.Status = 'f'
+AND c.User_ID = [User_ID];
+
+4) Select all services which a service provider offers
+SELECT ps.*, s.*
+FROM provider_service ps
+JOIN service s ON ps.Service_ID = s.SID;
+
+5) Select all services which are connected to a certain category
+SELECT *
+FROM service
+WHERE Category_ID = [Category_ID];
+
+6) Select all service providers who provide a certain service
+SELECT ps.*, u.*
+FROM provider_service ps
+JOIN users u ON ps.User_ID = u.UID
+WHERE ps.Service_ID = [Service_ID];
+
+7) Select all liked services
+SELECT *
+FROM liked_service;
+WHERE User_ID = [User_ID];
+
+10) Insert into liked services
+INSERT INTO liked_service (Comment, Date_Liked, User_ID, Provider_Service_ID) VALUES
+('Great service!', '2024-05-26 10:00:00', 1, 1),
+('Highly recommend!', '2024-05-26 11:00:00', 2, 2),
+('Very satisfied', '2024-05-26 12:00:00', 3, 3),
+('Will use again', '2024-05-26 13:00:00', 4, 4),
+('Top notch service', '2024-05-26 14:00:00', 5, 5);
+
+11) Insert into categories
+INSERT INTO category (Category_Type, Created_At, Admin_ID) VALUES
+('Home Repairs', '2024-05-26 10:00:00', 1),
+('Electronics', '2024-05-26 11:00:00', 2),
+('Automotive', '2024-05-26 12:00:00', 3),
+('Healthcare', '2024-05-26 13:00:00', 4),
+('Education', '2024-05-26 14:00:00', 5);
+
+12) Insert into services
+INSERT INTO service (Service_Name, Service_Description, Category_ID) VALUES
+('Electrician', 'Electrician service for home repairs', 1),
+('Plumber', 'Plumbing service for home repairs', 1),
+('Car Mechanic', 'Car repair and maintenance', 3),
+('Tutor', 'Private tutoring services', 5),
+('General Practitioner', 'Basic healthcare services', 4);
+
+13) Insert into service provider
+INSERT INTO provider_service (Total_Service_Rating, Name_Of_Service, Location, Telephone_Number, Description, Website, Email, Date_Of_Birth, User_ID, Service_ID, Image) VALUES
+(4.5, 'Electrician Services', '123 Main St', '123-456-7890', 'Professional electrical services', 'http://electrician.example.com', 'electrician@example.com', '1980-01-01', 1, 1, NULL),
+
+(4.8, 'Plumbing Services', '456 Elm St', '123-456-7891', 'Reliable plumbing services', 'http://plumber.example.com', 'plumber@example.com', '1982-02-02', 2, 2, NULL),
+(4.3, 'Car Repair', '789 Oak St', '123-456-7892', 'Expert car repair services', 'http://carrepair.example.com', 'carrepair@example.com', '1975-03-03', 3, 3, NULL),
+(4.7, 'Tutoring Services', '321 Pine St', '123-456-7893', 'Personalized tutoring', 'http://tutor.example.com', 'tutor@example.com', '1990-04-04', 4, 4, NULL),
+(4.6, 'Healthcare Services', '654 Maple St', '123-456-7894', 'Comprehensive healthcare', 'http://healthcare.example.com', 'healthcare@example.com', '1985-05-05', 5, 5, NULL);
+
+
